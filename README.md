@@ -20,7 +20,7 @@ bboxes = bbox_getter.get_bb(NAME, save_path=save_path, verbose=0)
 
 <details><summary>Examples</summary>
 <p>
-В example.ipynb можно попробовать разные картинки из example_images.
+В example.ipynb можно попробовать алгоритм на разных картинках из example_images. 
 </p>
 </details>
 
@@ -33,5 +33,5 @@ bboxes = bbox_getter.get_bb(NAME, save_path=save_path, verbose=0)
 </p>
 </details>
 
-By Кирилл Лалаянц и Владислав Дюжев  
-For Geoscan with LOVE
+#### By Кирилл Лалаянц и Владислав Дюжев  
+#### For Geoscan with LOVE
