@@ -3,7 +3,8 @@
 
 <details><summary>Инструкция</summary>
 <p>
-```python
+```python3
+
 import bb_getter.bb_getter2 as bbox_getter  
 
 
