@@ -1,8 +1,10 @@
-Крутит, вырезает ряды, возвращает массив bb  
+Крутит, вырезает ряды, возвращает массив bounding box'ов(4 точки, составляющие прямоугольник описывающий ряд на картинке)  
 ```python
 import bb_getter.bb_getter2 as bbox_getter  
 
-bboxes = bbox_getter.get_bb(f"{PATH}/{name}", save_path=save_path, verbose=0)  
+
+NAME = "PATH_TO_IMAGE"
+bboxes = bbox_getter.get_bb(NAME, save_path=save_path, verbose=0)  
 
 ```
 
