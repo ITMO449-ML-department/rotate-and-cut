@@ -17,18 +17,11 @@ bboxes = bbox_getter.get_bb(NAME, save_path=save_path, verbose=0)
 </p>
 </details>
 
-<details><summary>Инструкция</summary>
+<details><summary>Requirements</summary>
 <p>
 
-```python3
-
-import bb_getter.bb_getter2 as bbox_getter  
-
-
-NAME = "PATH_TO_IMAGE"
-bboxes = bbox_getter.get_bb(NAME, save_path=save_path, verbose=0)  
-
-```
+* python 3
+* pip install -r requirements.txt
 
 </p>
 </details>
