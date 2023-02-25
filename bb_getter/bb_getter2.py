@@ -89,15 +89,16 @@ def get_bb(name, save_path=None, verbose = 0):
     # limit = max(mn) * 0.4
     # limit = sorted(mn)[len(mn)//2 + int(len(mn)*0.25)]
     # limit = sum(mn)/len(mn)
-    limit = sorted(mn)[len(mn)//2]
+    # limit = sorted(mn)[int(len(mn)*0.8)]
+    limit = max(sorted(mn)[:int(len(mn)*0.9)]) * 0.5
     if save_path is not None:
         if verbose == 2:
             print("Plotting gists")
         plt.plot(mn)
         plt.plot([i for i in range(0, len(mn))], [limit] * len(mn))
         # plt.show()
-        plt.close()
         plt.savefig(save_path + "rows_gists.jpg")
+        plt.close()
     
     
     if save_path is not None:
