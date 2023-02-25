@@ -5,9 +5,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from PIL import Image, ImageOps
-import rotator.k_means_rotator as rotator
+import bb_getter.k_means_rotator as k_means_rotator
 import os
-def rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save_path):
+
+
+def _rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save_path):
     new_rect_rotated = np.zeros_like(image_original)
     colors = [(0,255,0), (255, 0, 0), (0,0,255)]
     i = 0
@@ -38,45 +40,11 @@ def rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save_
         plt.imsave(save_path + "bboxes.jpg", final)
     return rotated
 
-def get_bb(name, save_path=None, verbose = 0):
-    """
-    
-    :name: path to image
-    :save_path: save path for plots
-    :verbose:  0 - no info; 1 - results, important info; 2 - every step
 
-    :return: array of bounding boxes, angle of rotation
-
-    """
-    angle, lines_mask = rotator.get_rotation_angle(name, verbose)
-    if verbose == 2:
-        print("Preparing arrays")
-    image_original = Image.open(name)
-    image_original_array = np.array(image_original)
-    image_original_rotated = image_original.rotate(angle, expand=True)
-    image_original_rotated_array = np.array(image_original_rotated)
-
-    lines_mask_tiled = np.zeros_like(image_original_array)
-    lines_mask_tiled[:,:,0] = lines_mask[:,:,0]
-    lines_mask_tiled[:,:,1] = lines_mask[:,:,0]
-    lines_mask_tiled[:,:,2] = lines_mask[:,:,0]
-    lines_mask_tiled *= 255
-
-    rows_image_array = lines_mask_tiled
-    rows_image_rotated = Image.fromarray(lines_mask_tiled).rotate(angle, expand=True)
-    rows_image_rotated_array = np.array(rows_image_rotated)
-    if save_path is not None:
-        if verbose == 2:
-            print("Preparing save path")
-        save_path = f"{save_path}/{name.split('/')[-1].split('.')[0]}/"
-        if verbose > 0:
-            print("Saving to", save_path)
-        os.makedirs(save_path, exist_ok=True)
-        # plt.imshow(lines_mask)
-        plt.imsave(save_path + "rows_mask.jpg", lines_mask_tiled)
-
+def _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose):
     if verbose == 2:
         print("Calculating intensities")
+    # TODO : smart parts formula
     parts=800
     mn = []
     inds = np.linspace(0, rows_image_rotated_array.shape[0]-1, parts+1).astype(int)
@@ -85,7 +53,10 @@ def get_bb(name, save_path=None, verbose = 0):
             mn.append(np.count_nonzero(rows_image_rotated_array[inds[i-1]:inds[i], :, 1])/np.count_nonzero(image_original_rotated_array[inds[i-1]:inds[i], :, 1]))
         else:
             mn.append(0)
+    return mn, parts, inds
 
+
+def _calculate_limit(mn, save_path, verbose):
     # limit = max(mn) * 0.4
     # limit = sorted(mn)[len(mn)//2 + int(len(mn)*0.25)]
     # limit = sum(mn)/len(mn)
@@ -99,26 +70,25 @@ def get_bb(name, save_path=None, verbose = 0):
         # plt.show()
         plt.savefig(save_path + "rows_gists.jpg")
         plt.close()
+    return limit
     
-    
+
+def _prepare_save_location(save_path, name, verbose, lines_mask_tiled):
     if save_path is not None:
         if verbose == 2:
-            print("Plotting comparison")
-        image_array_for_drawing = image_original_rotated_array.copy()
-        for i in range(1, parts+1):
-            if mn[i-1] < limit:
-                image_array_for_drawing[inds[i-1]:inds[i], :, :] = np.zeros_like(image_array_for_drawing[inds[i-1]:inds[i], :, :])
+            print("Preparing save path")
+        save_path = f"{save_path}/{name.split('/')[-1].split('.')[0]}/"
+        if verbose > 0:
+            print("Saving to", save_path)
+        os.makedirs(save_path, exist_ok=True)
+        # plt.imshow(lines_mask)
+        plt.imsave(save_path + "rows_mask.jpg", lines_mask_tiled)
+    return save_path
 
-        f, axs = plt.subplots(1, 3, figsize=(12,8))
-        axs[0].imshow(image_original_rotated_array)
-        axs[1].imshow(image_array_for_drawing)
-        axs[2].imshow(rows_image_rotated_array)
-        # f.show()
-        # f.close()
-        f.savefig(save_path + "rows_comparison.jpg")
-        f.clear()
+
+def _find_borders(parts, mn, inds, limit, verbose):
     if verbose == 2:
-        print("Finding rows")
+        print("Searching for rows")
     borders = []
     low = 0
     high = 0
@@ -137,6 +107,26 @@ def get_bb(name, save_path=None, verbose = 0):
             previous_is_row = False
     if verbose > 0:
         print(f"Found {len(borders)} rows")
+    return borders
+
+
+def _plot_orig_cut_kmeans(image_original_rotated_array, parts, mn, limit, inds, rows_image_rotated_array, save_path, verbose):
+    if save_path is not None:
+        if verbose == 2:
+            print("Plotting comparison")
+        image_array_for_drawing = image_original_rotated_array.copy()
+        for i in range(1, parts+1):
+            if mn[i-1] < limit:
+                image_array_for_drawing[inds[i-1]:inds[i], :, :] = np.zeros_like(image_array_for_drawing[inds[i-1]:inds[i], :, :])
+
+        f, axs = plt.subplots(1, 3, figsize=(12,8))
+        axs[0].imshow(image_original_rotated_array)
+        axs[1].imshow(image_array_for_drawing)
+        axs[2].imshow(rows_image_rotated_array)
+        f.savefig(save_path + "rows_comparison.jpg")
+        f.clear()
+
+def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
     bboxes = []
     bboxes_debug = []
     if verbose == 2:
@@ -190,6 +180,50 @@ def get_bb(name, save_path=None, verbose = 0):
             image_array_for_drawing  = cv2.addWeighted(image_array_for_drawing,1,new_rect_rotated,1,0)
         # plt.imshow(image_array_for_drawing)
         plt.imsave(save_path + "rows_check.jpg", image_array_for_drawing)
-    return rotate_bb(image_original_array, image_original_rotated_array, angle, bboxes, save_path)
-    # return bboxes, angle, image_original_rotated_array
+    return bboxes
+
+
+def get_bb(name, save_path=None, verbose = 0):
+    """
+    
+    :name: path to image
+    :save_path: save path for plots
+    :verbose:  0 - no info; 1 - results, important info; 2 - every step
+
+    :return: array of bounding boxes, angle of rotation
+
+    """
+
+    angle, lines_mask = k_means_rotator.get_rotation_angle(name, verbose)
+
+    if verbose == 2:
+        print("Preparing arrays")
+    image_original = Image.open(name)
+    image_original_array = np.array(image_original)
+    image_original_rotated = image_original.rotate(angle, expand=True)
+    image_original_rotated_array = np.array(image_original_rotated)
+
+    lines_mask_tiled = np.zeros_like(image_original_array)
+    lines_mask_tiled[:,:,0] = lines_mask[:,:,0]
+    lines_mask_tiled[:,:,1] = lines_mask[:,:,0]
+    lines_mask_tiled[:,:,2] = lines_mask[:,:,0]
+    lines_mask_tiled *= 255
+
+    rows_image_array = lines_mask_tiled
+    rows_image_rotated = Image.fromarray(lines_mask_tiled).rotate(angle, expand=True)
+    rows_image_rotated_array = np.array(rows_image_rotated)
+    
+    save_path = _prepare_save_location(save_path, name, verbose, lines_mask_tiled)
+
+    mn, parts, inds = _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose)
+
+    limit = _calculate_limit(mn, save_path, verbose)
+    
+    _plot_orig_cut_kmeans(image_original_rotated_array, parts, mn, limit, inds, rows_image_rotated_array, save_path, verbose)
+    
+    borders = _find_borders(parts, mn, inds, limit, verbose)
+
+    bboxes = _find_bboxes(borders, image_original_rotated_array, save_path, verbose)
+
+    return _rotate_bb(image_original_array, image_original_rotated_array, angle, bboxes, save_path)
                     
