@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans, DBSCAN
-import PIL
 
 
 # old_version of _k_means_choose_channel
@@ -56,7 +55,7 @@ def _k_means_choose_channel(new_X, image, verbose,save_path):
 
 
 def _get_kmeans_mask(image, verbose,save_path=None):
-    predictions = KMeans(3, n_init=10).fit_predict(image.reshape((-1, 3))) + 1
+    predictions = KMeans(3, n_init="auto").fit_predict(image.reshape((-1, 3))) + 1
     goal_index = _k_means_choose_channel(predictions, image, verbose,save_path)
     lines_mask = (predictions*(predictions == goal_index)).reshape((*image.shape[:-1], 1))
     return lines_mask

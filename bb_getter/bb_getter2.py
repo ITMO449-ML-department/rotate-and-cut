@@ -27,7 +27,6 @@ def _rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save
         p2 = np.array([x2 - center[0],y2 - center[1]]).dot(rotate_matrix).astype(int)
         p3 = np.array([x3 - center[0],y3 - center[1]]).dot(rotate_matrix).astype(int)
         p4 = np.array([x4 - center[0],y4 - center[1]]).dot(rotate_matrix).astype(int)
-        # print()
         center = np.array([new_rect_rotated.shape[1]//2,new_rect_rotated.shape[0]//2]).astype(int)
         new_rect_rotated = cv2.circle(new_rect_rotated, p1 + center,2, colors[i], 30)
         new_rect_rotated = cv2.circle(new_rect_rotated, p2 + center,2, colors[i], 30)
@@ -44,10 +43,10 @@ def _rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save
 def _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose):
     if verbose == 2:
         print("Calculating intensities")
-    # TODO: smart parts formula
-    # parts=int(800 / 4500 * rows_image_rotated_array.shape[0])
-    print(rows_image_rotated_array.shape)
     parts = rows_image_rotated_array.shape[0] // 6
+    # parts = max(800, rows_image_rotated_array.shape[0] // 6)
+    # print(parts)
+    # parts = 800
     mn = []
     inds = np.linspace(0, rows_image_rotated_array.shape[0]-1, parts+1).astype(int)
     for i in range(1, parts+1):
@@ -59,13 +58,12 @@ def _calculate_intensities(rows_image_rotated_array, image_original_rotated_arra
 
 
 def _calculate_limit(mn, save_path, verbose):
-    limit = max(sorted(mn)[:int(len(mn)*0.9)]) * 0.5
+    limit = max(sorted(mn)[:int(len(mn)*0.95)]) * 0.65
     if save_path is not None:
         if verbose == 2:
             print("Plotting gists")
         plt.plot(mn)
         plt.plot([i for i in range(0, len(mn))], [limit] * len(mn))
-        # plt.show()
         plt.savefig(save_path + "rows_gists.jpg")
         plt.close()
     return limit
@@ -79,7 +77,6 @@ def _prepare_save_location(save_path, name, verbose):
         if verbose > 0:
             print("Saving to", save_path)
         os.makedirs(save_path, exist_ok=True)
-        # plt.imshow(lines_mask)
     return save_path
 
 
@@ -167,14 +164,10 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
         if verbose == 2:
             print("Plotting rows check")
         for box in bboxes:
-            # print(box[0], box[2]
             a, b = box[0]
             c, d = box[2]
             new_rect_rotated = cv2.rectangle(image_array_for_drawing.copy() * 0, (b, a), (d, c), (255,0,0), -1)
-            # plt.imshow(new_rect_rotated)
-            # break
             image_array_for_drawing  = cv2.addWeighted(image_array_for_drawing,1,new_rect_rotated,1,0)
-        # plt.imshow(image_array_for_drawing)
         plt.imsave(save_path + "rows_check.jpg", image_array_for_drawing)
     return bboxes
 
