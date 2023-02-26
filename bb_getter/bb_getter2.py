@@ -7,6 +7,7 @@ from sklearn.cluster import DBSCAN
 from PIL import Image, ImageOps
 import bb_getter.k_means_rotator as k_means_rotator
 import os
+import scipy
 
 
 def _rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save_path):
@@ -40,6 +41,17 @@ def _rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save
     return rotated
 
 
+def smooth(y, x):
+    w = scipy.fftpack.rfft(y)
+    f = scipy.fftpack.rfftfreq(len(x), x[1]-x[0])
+    spectrum = w**2
+
+    cutoff_idx = spectrum < (spectrum.max()/100)
+    w2 = w.copy()
+    w2[cutoff_idx] = 0
+    y2 = scipy.fftpack.irfft(w2)
+    return y2
+
 def _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose):
     if verbose == 2:
         print("Calculating intensities")
@@ -54,16 +66,22 @@ def _calculate_intensities(rows_image_rotated_array, image_original_rotated_arra
             mn.append(np.count_nonzero(rows_image_rotated_array[inds[i-1]:inds[i], :, 1])/np.count_nonzero(image_original_rotated_array[inds[i-1]:inds[i], :, 1]))
         else:
             mn.append(0)
-    return mn, parts, inds
+    mn_smoothed = smooth(mn,[i for i in range(len(mn))])
+    limit_smoothed = max(mn_smoothed)*0.4
+    return mn, parts, inds, limit_smoothed
 
 
-def _calculate_limit(mn, save_path, verbose):
-    limit = max(sorted(mn)[:int(len(mn)*0.95)]) * 0.65
+def _calculate_limit(mn, save_path, limit_smoothed, verbose):
+    # limit = max(sorted(mn)[:int(len(mn)*0.95)]) * 0.65
+    limit = max(mn)*0.4
+    print(limit)
     if save_path is not None:
         if verbose == 2:
             print("Plotting gists")
         plt.plot(mn)
-        plt.plot([i for i in range(0, len(mn))], [limit] * len(mn))
+        plt.plot([i for i in range(0, len(mn))], [limit] * len(mn), label='not')
+        plt.plot([i for i in range(0, len(mn))], [limit_smoothed] * len(mn), label='smoothed')
+        plt.legend()
         plt.savefig(save_path + "rows_gists.jpg")
         plt.close()
     return limit
@@ -137,7 +155,7 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
                 # print(strip[:, counter_left, :])
                 counter_left += 1
                 if counter_left == strip.shape[1]-1:
-                    print("limit")
+                    # print("limit")
                     break
         while True:
             if np.any(strip[:, counter_right, :] != 0):
@@ -145,7 +163,7 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
             else:
                 counter_right-= 1
                 if counter_right < 1:
-                    print("limit")
+                    # print("limit")
                     break
         bboxes_debug.append(((low, high, counter_left, counter_right)))
         bboxes.append(((low, counter_left), (low, counter_right), (high, counter_right), (high, counter_left)))
@@ -154,21 +172,21 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
         print(f"Found {len(bboxes)} bboxes")
         
     if save_path is not None:
-        if verbose == 2:
-            print("Plotting rows debug")
         image_array_for_drawing = image_original_rotated_array.copy() * 0 + 255
-        for low, high, left, right in bboxes_debug:
-            image_array_for_drawing[low:high, left:right, :] = image_original_rotated_array[low:high, left:right, :]
-        # plt.imshow(image_array_for_drawing)
-        plt.imsave(save_path + "rows_debug.jpg", image_array_for_drawing)
+        # if verbose == 2:
+        #     print("Plotting rows debug")
+        # for low, high, left, right in bboxes_debug:
+        #     image_array_for_drawing[low:high, left:right, :] = image_original_rotated_array[low:high, left:right, :]
+        # # plt.imshow(image_array_for_drawing)
+        # plt.imsave(save_path + "rows_debug.jpg", image_array_for_drawing)
         if verbose == 2:
             print("Plotting rows check")
         for box in bboxes:
             a, b = box[0]
             c, d = box[2]
             new_rect_rotated = cv2.rectangle(image_array_for_drawing.copy() * 0, (b, a), (d, c), (255,0,0), -1)
-            image_array_for_drawing  = cv2.addWeighted(image_array_for_drawing,1,new_rect_rotated,1,0)
-        plt.imsave(save_path + "rows_check.jpg", image_array_for_drawing)
+            image_original_rotated_array  = cv2.addWeighted(image_original_rotated_array,1,new_rect_rotated,1,0)
+        plt.imsave(save_path + "rows_check.jpg", image_original_rotated_array)
     return bboxes
 
 
@@ -207,9 +225,11 @@ def get_bb(name, save_path=None, verbose = 0):
     if save_path is not None:
         plt.imsave(save_path + "rows_mask.jpg", lines_mask_tiled)
 
-    mn, parts, inds = _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose)
+    mn, parts, inds, limit_smoothed = _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose)
 
-    limit = _calculate_limit(mn, save_path, verbose)
+    limit = _calculate_limit(mn, save_path, limit_smoothed, verbose)
+
+    limit = limit_smoothed
     
     _plot_orig_cut_kmeans(image_original_rotated_array, parts, mn, limit, inds, rows_image_rotated_array, save_path, verbose)
     
