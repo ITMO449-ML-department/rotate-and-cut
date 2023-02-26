@@ -257,7 +257,7 @@ def get_bb(name, save_path=None, intensity = "keypoints", smooth = False, verbos
     intensity : {'keypoint', 'kmeansmask'}
         way of calculating intensity of a row ('keypoint' - by keypoint; 'kmeansmask' - by k-means mask)
     smooth : bool
-        smooth intensity hist (True; False)
+        smooth intensity hist
 
     return: arr[], float
         array of bounding boxes, angle of rotation
