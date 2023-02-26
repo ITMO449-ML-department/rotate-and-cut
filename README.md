@@ -11,7 +11,8 @@ import bb_getter.bb_getter2 as bbox_getter
 
 NAME = "PATH_TO_IMAGE"
 save_path = "PATH_TO_SAVE_DEBUG_INFO_FOLDER"
-bboxes = bbox_getter.get_bb(NAME, save_path=save_path, verbose=0)  
+
+bboxes = bbox_getter.get_bb(NAME, intensity = "keypoints", smooth = False, save_path=save_path, verbose=0)
 
 ```
 

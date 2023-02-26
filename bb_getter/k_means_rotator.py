@@ -55,7 +55,7 @@ def _k_means_choose_channel(new_X, image, verbose,save_path):
 
 
 def _get_kmeans_mask(image, verbose,save_path=None):
-    predictions = KMeans(3, n_init="auto").fit_predict(image.reshape((-1, 3))) + 1
+    predictions = KMeans(3,n_init="auto").fit_predict(image.reshape((-1, 3))) + 1
     goal_index = _k_means_choose_channel(predictions, image, verbose,save_path)
     lines_mask = (predictions*(predictions == goal_index)).reshape((*image.shape[:-1], 1))
     return lines_mask
@@ -105,10 +105,13 @@ def _get_rotation_angle_with_dbscan(angles):
 def get_rotation_angle(name, verbose, save_path = None):
     """
     
-    :name: path to image
-    :verbose:  0 - no info; 1 - results, important info; 2 - every step
+    name : str
+        path to image
+    verbose : int {0, 1, 2}
+        0 - no info; 1 - results, important info; 2 - every step
 
-    :return: angle to rotate, mask made by k-means algo
+    return : int, np.array
+        angle to rotate, mask made by k-means algo
 
     """
 

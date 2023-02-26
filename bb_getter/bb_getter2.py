@@ -53,7 +53,7 @@ def smooth(y, x):
     y2 = scipy.fftpack.irfft(w2)
     return y2
 
-def _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose):
+def _calculate_intensities_by_k_mean_mask(rows_image_rotated_array, image_original_rotated_array, verbose):
     if verbose == 2:
         print("Calculating intensities")
     parts = rows_image_rotated_array.shape[0] // 6
@@ -68,8 +68,7 @@ def _calculate_intensities(rows_image_rotated_array, image_original_rotated_arra
         else:
             mn.append(0)
     mn_smoothed = smooth(mn,[i for i in range(len(mn))])
-    limit_smoothed = max(mn_smoothed)*0.4
-    return mn, parts, inds, limit_smoothed
+    return mn, mn_smoothed, parts, inds
 
 def _calculate_intensities_by_key_points(image_original_rotated_array, verbose):
     img = cv2.cvtColor(image_original_rotated_array.astype(np.uint8), cv2.COLOR_BGR2GRAY)
@@ -97,24 +96,24 @@ def _calculate_intensities_by_key_points(image_original_rotated_array, verbose):
         else:
             mn.append(0)
     mn_smoothed = smooth(mn,[i for i in range(len(mn))])
-    limit_smoothed = max(mn_smoothed)*0.4
-    return mn, parts, inds, limit_smoothed
+    # limit_smoothed = max(mn_smoothed)*0.4
+    return mn, mn_smoothed, parts, inds
 
 
-def _calculate_limit(mn, save_path, limit_smoothed, verbose):
-    limit = max(sorted(mn)[:int(len(mn)*0.95)]) * 0.4
-    # limit = max(mn)*0.4
-    # print(limit)
+def _calculate_limit(mn, mn_smoothed, save_path, verbose):
+    limit = max(sorted(mn)[:int(len(mn)*0.95)]) * 0.3
+    limit_smoothed = max(sorted(mn_smoothed)[:int(len(mn_smoothed)*0.97)]) * 0.45
     if save_path is not None:
         if verbose == 2:
             print("Plotting gists")
-        plt.plot(mn)
+        plt.plot(mn, label='plot not')
         plt.plot([i for i in range(0, len(mn))], [limit] * len(mn), label='not')
         plt.plot([i for i in range(0, len(mn))], [limit_smoothed] * len(mn), label='smoothed')
+        plt.plot(mn_smoothed, "-", label='plot smooth')
         plt.legend()
         plt.savefig(save_path + "rows_gists.jpg")
         plt.close()
-    return limit
+    return limit, limit_smoothed
     
 
 def _prepare_save_location(save_path, name, verbose):
@@ -246,14 +245,22 @@ def _analyse_peaks(mn,inds,save_path =None):
     
 
 
-def get_bb(name, save_path=None, verbose = 0):
+def get_bb(name, save_path=None, intensity = "keypoints", smooth = False, verbose = 0):
     """
     
-    :name: path to image
-    :save_path: save path for plots
-    :verbose:  0 - no info; 1 - results, important info; 2 - every step
+    name : str
+        path to image
+    save_path : str
+        save path for plots
+    verbose : int
+        0 - no info; 1 - results, important info; 2 - every step
+    intensity : {'keypoint', 'kmeansmask'}
+        way of calculating intensity of a row ('keypoint' - by keypoint; 'kmeansmask' - by k-means mask)
+    smooth : bool
+        smooth intensity hist (True; False)
 
-    :return: array of bounding boxes, angle of rotation
+    return: arr[], float
+        array of bounding boxes, angle of rotation
 
     """
     
@@ -281,13 +288,17 @@ def get_bb(name, save_path=None, verbose = 0):
     if save_path is not None:
         plt.imsave(save_path + "rows_mask.jpg", lines_mask_tiled)
 
-    # mn, parts, inds, limit_smoothed = _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose)
-    mn, parts, inds, limit_smoothed = _calculate_intensities_by_key_points(image_original_rotated_array, verbose)
+    if intensity == "keypoints":
+        mn, mn_smoothed, parts, inds = _calculate_intensities_by_key_points(image_original_rotated_array, verbose)
+    elif intensity == "kmeansmask":
+        mn, mn_smoothed, parts, inds = _calculate_intensities_by_k_mean_mask(rows_image_rotated_array, image_original_rotated_array, verbose)
 
-    limit = _calculate_limit(mn, save_path, limit_smoothed, verbose)
+    limit, limit_smoothed = _calculate_limit(mn, mn_smoothed, save_path, verbose)
 
-    # limit = limit_smoothed
-    
+    if smooth:
+        mn = mn_smoothed
+        limit = limit_smoothed
+
     _plot_orig_cut_kmeans(image_original_rotated_array, parts, mn, limit, inds, rows_image_rotated_array, save_path, verbose)
     
     borders = _find_borders(parts, mn, inds, limit, verbose)
