@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans, DBSCAN
 import PIL
 
 
-# TODO: FIX THIS SHIT
+# old_version of _k_means_choose_channel
 def _k_means_choose_channel_contours(new_X, image, verbose,save_path):
     first_channel = (new_X*(new_X == 1)).reshape((*image.shape[:-1], 1))
     second_channel = (new_X*(new_X == 2)).reshape((*image.shape[:-1], 1))

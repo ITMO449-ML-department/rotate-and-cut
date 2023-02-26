@@ -44,8 +44,10 @@ def _rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save
 def _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose):
     if verbose == 2:
         print("Calculating intensities")
-    # TODO : smart parts formula
-    parts=800
+    # TODO: smart parts formula
+    # parts=int(800 / 4500 * rows_image_rotated_array.shape[0])
+    print(rows_image_rotated_array.shape)
+    parts = rows_image_rotated_array.shape[0] // 6
     mn = []
     inds = np.linspace(0, rows_image_rotated_array.shape[0]-1, parts+1).astype(int)
     for i in range(1, parts+1):
@@ -57,10 +59,6 @@ def _calculate_intensities(rows_image_rotated_array, image_original_rotated_arra
 
 
 def _calculate_limit(mn, save_path, verbose):
-    # limit = max(mn) * 0.4
-    # limit = sorted(mn)[len(mn)//2 + int(len(mn)*0.25)]
-    # limit = sum(mn)/len(mn)
-    # limit = sorted(mn)[int(len(mn)*0.8)]
     limit = max(sorted(mn)[:int(len(mn)*0.9)]) * 0.5
     if save_path is not None:
         if verbose == 2:
@@ -130,7 +128,6 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
     bboxes_debug = []
     if verbose == 2:
         print("Calculating bboxes")
-    # TODO: все что выше - правильно(см дебаг папку) и вывод проги, ошибка ниже
     for low, high in borders:
         strip = image_original_rotated_array[low:high, :, :]
         counter_left = 0
