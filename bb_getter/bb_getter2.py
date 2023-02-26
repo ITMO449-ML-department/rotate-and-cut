@@ -73,7 +73,7 @@ def _calculate_limit(mn, save_path, verbose):
     return limit
     
 
-def _prepare_save_location(save_path, name, verbose, lines_mask_tiled):
+def _prepare_save_location(save_path, name, verbose):
     if save_path is not None:
         if verbose == 2:
             print("Preparing save path")
@@ -82,7 +82,6 @@ def _prepare_save_location(save_path, name, verbose, lines_mask_tiled):
             print("Saving to", save_path)
         os.makedirs(save_path, exist_ok=True)
         # plt.imshow(lines_mask)
-        plt.imsave(save_path + "rows_mask.jpg", lines_mask_tiled)
     return save_path
 
 
@@ -193,8 +192,10 @@ def get_bb(name, save_path=None, verbose = 0):
     :return: array of bounding boxes, angle of rotation
 
     """
+    
+    save_path = _prepare_save_location(save_path, name, verbose)
 
-    angle, lines_mask = k_means_rotator.get_rotation_angle(name, verbose)
+    angle, lines_mask = k_means_rotator.get_rotation_angle(name, verbose,save_path)
 
     if verbose == 2:
         print("Preparing arrays")
@@ -213,7 +214,8 @@ def get_bb(name, save_path=None, verbose = 0):
     rows_image_rotated = Image.fromarray(lines_mask_tiled).rotate(angle, expand=True)
     rows_image_rotated_array = np.array(rows_image_rotated)
     
-    save_path = _prepare_save_location(save_path, name, verbose, lines_mask_tiled)
+    if save_path is not None:
+        plt.imsave(save_path + "rows_mask.jpg", lines_mask_tiled)
 
     mn, parts, inds = _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose)
 

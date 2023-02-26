@@ -6,10 +6,18 @@ import PIL
 
 
 # TODO: FIX THIS SHIT
-def _k_means_choose_channel(new_X, image, verbose):
+def _k_means_choose_channel(new_X, image, verbose,save_path):
     first_channel = (new_X*(new_X == 1)).reshape((*image.shape[:-1], 1))
     second_channel = (new_X*(new_X == 2)).reshape((*image.shape[:-1], 1))
     third_channel = (new_X*(new_X == 3)).reshape((*image.shape[:-1], 1))
+    
+    if save_path is not None:
+        fig, ax = plt.subplots(1,3)
+        ax[0].imshow(first_channel,cmap="gray")
+        ax[1].imshow(second_channel,cmap="gray")
+        ax[2].imshow(third_channel,cmap="gray")
+        fig.savefig(save_path+"kmeans.jpg")
+        fig.clear()
 
     contours_counter = []
     for img in [first_channel, second_channel, third_channel]:
@@ -27,9 +35,9 @@ def _k_means_choose_channel(new_X, image, verbose):
     return goal_index
 
 
-def _get_kmeans_mask(image, verbose):
+def _get_kmeans_mask(image, verbose,save_path=None):
     predictions = KMeans(3, n_init=10).fit_predict(image.reshape((-1, 3))) + 1
-    goal_index = _k_means_choose_channel(predictions, image, verbose)
+    goal_index = _k_means_choose_channel(predictions, image, verbose,save_path)
     lines_mask = (predictions*(predictions == goal_index)).reshape((*image.shape[:-1], 1))
     return lines_mask
 
@@ -45,7 +53,7 @@ def _get_hough(lines_mask, image):
                             min_line_length, max_line_gap), line_image
 
 
-def _get_hough_angles(lines_mask, image, plot_hough):
+def _get_hough_angles(lines_mask, image, save_path):
     lines, line_image = _get_hough(lines_mask, image)
 
     angles = []
@@ -55,8 +63,8 @@ def _get_hough_angles(lines_mask, image, plot_hough):
             cv2.line(line_image, (x1, y1), (x2, y2), (255, 0, 0), 5)
     angles = np.array(angles)
     
-    if plot_hough:
-        plt.imshow(line_image)
+    if save_path is not None:
+        plt.imsave(save_path+"hough.jpg",line_image)
     return angles
 
 
@@ -75,7 +83,7 @@ def _get_rotation_angle_with_dbscan(angles):
     return rot_angle
 
 
-def get_rotation_angle(name, verbose, plot_kmeans=False, plot_hough=False):
+def get_rotation_angle(name, verbose, save_path = None):
     """
     
     :name: path to image
@@ -89,13 +97,12 @@ def get_rotation_angle(name, verbose, plot_kmeans=False, plot_hough=False):
     if verbose == 2:
         print(f"Openning image {name}")
     image = cv2.imread(name)
-
     if verbose == 2:
         print("Getting mask of rows using k-means algo")
-    lines_mask = _get_kmeans_mask(image, verbose=verbose)
+    lines_mask = _get_kmeans_mask(image, verbose=verbose,save_path=save_path)
 
     if verbose == 2:
         print("Calculating hough lines and angles")
-    hough_angles = _get_hough_angles(lines_mask, image, plot_hough)
+    hough_angles = _get_hough_angles(lines_mask, image, save_path)
 
     return _get_rotation_angle_with_dbscan(hough_angles), lines_mask
