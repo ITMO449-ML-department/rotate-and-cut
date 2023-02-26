@@ -8,6 +8,7 @@ from PIL import Image, ImageOps
 import bb_getter.k_means_rotator as k_means_rotator
 import os
 import scipy
+from scipy.signal import find_peaks
 
 
 def _rotate_bb(image_original, image_original_rotated_array, angle, bboxes, save_path):
@@ -181,13 +182,39 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
         # plt.imsave(save_path + "rows_debug.jpg", image_array_for_drawing)
         if verbose == 2:
             print("Plotting rows check")
+        colors = [(0,255,0), (255, 0, 0), (0,0,255)]
+        i=0
         for box in bboxes:
             a, b = box[0]
             c, d = box[2]
-            new_rect_rotated = cv2.rectangle(image_array_for_drawing.copy() * 0, (b, a), (d, c), (255,0,0), -1)
+            new_rect_rotated = cv2.rectangle(image_array_for_drawing.copy() * 0, (b, a), (d, c), colors[i], -1)
+            i = (i+1)%3
             image_original_rotated_array  = cv2.addWeighted(image_original_rotated_array,1,new_rect_rotated,1,0)
         plt.imsave(save_path + "rows_check.jpg", image_original_rotated_array)
     return bboxes
+
+
+def _analyse_peaks(mn,inds,save_path =None):
+    peaks, _ = find_peaks(mn, distance=5)
+    
+    if save_path is not None:
+        mn = np.array(mn)
+        plt.plot(mn)
+        plt.plot(peaks,mn[peaks],"x")
+        plt.savefig(save_path+"peaks.jpg")
+        plt.close()
+    
+    diff = np.diff(peaks).mean()
+    borders=[]
+    
+    for i in range(len(peaks)):
+        try:
+            borders.append([inds[peaks[i]] - int(diff*0.4), inds[peaks[i] + int(diff*0.4)]])
+        except:
+            pass
+    return borders
+    
+    
 
 
 def get_bb(name, save_path=None, verbose = 0):
@@ -233,7 +260,8 @@ def get_bb(name, save_path=None, verbose = 0):
     
     _plot_orig_cut_kmeans(image_original_rotated_array, parts, mn, limit, inds, rows_image_rotated_array, save_path, verbose)
     
-    borders = _find_borders(parts, mn, inds, limit, verbose)
+    # borders = _find_borders(parts, mn, inds, limit, verbose)
+    borders = _analyse_peaks(mn,inds,save_path)
 
     bboxes = _find_bboxes(borders, image_original_rotated_array, save_path, verbose)
 
