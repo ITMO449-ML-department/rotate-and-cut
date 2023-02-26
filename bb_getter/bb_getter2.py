@@ -71,11 +71,40 @@ def _calculate_intensities(rows_image_rotated_array, image_original_rotated_arra
     limit_smoothed = max(mn_smoothed)*0.4
     return mn, parts, inds, limit_smoothed
 
+def _calculate_intensities_by_key_points(image_original_rotated_array, verbose):
+    img = cv2.cvtColor(image_original_rotated_array.astype(np.uint8), cv2.COLOR_BGR2GRAY)
+    # Initiate FAST detector
+    star = cv2.xfeatures2d.StarDetector_create()
+    # find the keypoints with STAR
+    kp = star.detect(img,None)
+    if verbose > 1:
+        print(f"Found {len(kp)} keypoints")
+
+    rows_image_rotated_array = image_original_rotated_array.copy() * 0
+    rows_image_rotated_array=cv2.drawKeypoints(rows_image_rotated_array,kp,None)
+
+    if verbose == 2:
+        print("Calculating intensities")
+    parts = image_original_rotated_array.shape[0] // 6
+    # parts = max(800, rows_image_rotated_array.shape[0] // 6)
+    # print(parts)
+    # parts = 800
+    mn = []
+    inds = np.linspace(0, image_original_rotated_array.shape[0]-1, parts+1).astype(int)
+    for i in range(1, parts+1):
+        if np.count_nonzero(image_original_rotated_array[inds[i-1]:inds[i], :, 1]) > 0:
+            mn.append(np.count_nonzero(rows_image_rotated_array[inds[i-1]:inds[i], :, 1])/np.count_nonzero(image_original_rotated_array[inds[i-1]:inds[i], :, 1]))
+        else:
+            mn.append(0)
+    mn_smoothed = smooth(mn,[i for i in range(len(mn))])
+    limit_smoothed = max(mn_smoothed)*0.4
+    return mn, parts, inds, limit_smoothed
+
 
 def _calculate_limit(mn, save_path, limit_smoothed, verbose):
-    # limit = max(sorted(mn)[:int(len(mn)*0.95)]) * 0.65
-    limit = max(mn)*0.4
-    print(limit)
+    limit = max(sorted(mn)[:int(len(mn)*0.95)]) * 0.4
+    # limit = max(mn)*0.4
+    # print(limit)
     if save_path is not None:
         if verbose == 2:
             print("Plotting gists")
@@ -252,16 +281,17 @@ def get_bb(name, save_path=None, verbose = 0):
     if save_path is not None:
         plt.imsave(save_path + "rows_mask.jpg", lines_mask_tiled)
 
-    mn, parts, inds, limit_smoothed = _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose)
+    # mn, parts, inds, limit_smoothed = _calculate_intensities(rows_image_rotated_array, image_original_rotated_array, verbose)
+    mn, parts, inds, limit_smoothed = _calculate_intensities_by_key_points(image_original_rotated_array, verbose)
 
     limit = _calculate_limit(mn, save_path, limit_smoothed, verbose)
 
-    limit = limit_smoothed
+    # limit = limit_smoothed
     
     _plot_orig_cut_kmeans(image_original_rotated_array, parts, mn, limit, inds, rows_image_rotated_array, save_path, verbose)
     
-    # borders = _find_borders(parts, mn, inds, limit, verbose)
-    borders = _analyse_peaks(mn,inds,save_path)
+    borders = _find_borders(parts, mn, inds, limit, verbose)
+    # borders = _analyse_peaks(mn,inds,save_path)
 
     bboxes = _find_bboxes(borders, image_original_rotated_array, save_path, verbose)
 
