@@ -6,7 +6,7 @@ import PIL
 
 
 # TODO: FIX THIS SHIT
-def _k_means_choose_channel(new_X, image, verbose,save_path):
+def _k_means_choose_channel_contours(new_X, image, verbose,save_path):
     first_channel = (new_X*(new_X == 1)).reshape((*image.shape[:-1], 1))
     second_channel = (new_X*(new_X == 2)).reshape((*image.shape[:-1], 1))
     third_channel = (new_X*(new_X == 3)).reshape((*image.shape[:-1], 1))
@@ -31,7 +31,27 @@ def _k_means_choose_channel(new_X, image, verbose,save_path):
         contours_counter.append(len(contours))
         if verbose == 2:
             print(f"Amount {len(contours_counter)} -> {contours_counter[-1]}")
+
     goal_index = np.argmax(np.array(contours_counter)) + 1
+    return goal_index
+
+def _k_means_choose_channel(new_X, image, verbose,save_path):
+    if save_path is not None:
+        fig, ax = plt.subplots(1,3)
+        first_channel = (new_X*(new_X == 1)).reshape((*image.shape[:-1], 1))
+        second_channel = (new_X*(new_X == 2)).reshape((*image.shape[:-1], 1))
+        third_channel = (new_X*(new_X == 3)).reshape((*image.shape[:-1], 1))
+        ax[0].imshow(first_channel,cmap="gray")
+        ax[1].imshow(second_channel,cmap="gray")
+        ax[2].imshow(third_channel,cmap="gray")
+        fig.savefig(save_path+"kmeans.jpg")
+        fig.clear()
+    
+    pixel_sum = [image.reshape((-1,3))[new_X==1].sum(),image.reshape((-1,3))[new_X==2].sum(),image.reshape((-1,3))[new_X==3].sum()]
+    non_z = [np.count_nonzero(first_channel),np.count_nonzero(second_channel),np.count_nonzero(third_channel)]
+    non_z[np.argmin(pixel_sum)] = max(non_z) + 1
+
+    goal_index = 1 + np.argmin(non_z)
     return goal_index
 
 
