@@ -1,5 +1,5 @@
 # ROTATE-AND-CUT
-#### Крутит, вырезает ряды, возвращает массив bounding box'ов(4 точки, составляющие прямоугольник, описывающий ряд на картинке)  
+#### Крутит, вырезает ряды, возвращает массив bounding box'ов(наборы из 4 точек, составляющих прямоугольники, каждый из которых описывает ряд на картинке)  
 
 <details><summary>Инструкция</summary>
 <p>
@@ -29,7 +29,9 @@ bboxes = bbox_getter.get_bb(name, intensity = "keypoints", smooth = False, save_
 
 <details><summary>Examples</summary>
 <p>
-В example.ipynb можно попробовать алгоритм на разных картинках из example_images. 
+
+В example.ipynb можно попробовать алгоритм на разных картинках из example_images.  
+
 </p>
 </details>
 
