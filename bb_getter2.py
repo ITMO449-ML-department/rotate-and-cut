@@ -263,6 +263,9 @@ def get_bb(name, image_array = None, save_path=None, intensity = "keypoints", sm
         array of bounding boxes, angle of rotation
 
     """
+
+    if image_array is not None:
+        image_array = image_array[:,:, :3]
     
     save_path = _prepare_save_location(save_path, name, verbose)
 

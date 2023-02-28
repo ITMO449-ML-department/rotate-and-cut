@@ -37,6 +37,7 @@ def _k_means_choose_channel_contours(new_X, image, verbose,save_path):
 def _k_means_choose_channel(new_X, image, verbose,save_path):
     if save_path is not None:
         fig, ax = plt.subplots(1,3)
+        print(new_X.shape, image.shape)
         first_channel = (new_X*(new_X == 1)).reshape((*image.shape[:-1], 1))
         second_channel = (new_X*(new_X == 2)).reshape((*image.shape[:-1], 1))
         third_channel = (new_X*(new_X == 3)).reshape((*image.shape[:-1], 1))
@@ -124,6 +125,7 @@ def get_rotation_angle(name, image_array, verbose, save_path = None):
     if verbose == 2:
         print(f"Openning image {name}")
     image = image_array if image_array is not None else cv2.imread(name)
+    print(image.shape)
     if verbose == 2:
         print("Getting mask of rows using k-means algo")
     lines_mask = _get_kmeans_mask(image, verbose=verbose,save_path=save_path)
