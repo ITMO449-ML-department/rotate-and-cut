@@ -97,8 +97,13 @@ def _get_rotation_angle_with_dbscan(angles):
     card = []
     for i in range(n_clusters_):
         card.append((labels == i).sum())
-
-    rot_angle = angles[labels == card.index(max(card))].mean()
+    
+    try:
+        rot_angle = angles[labels == card.index(max(card))].mean()
+    except ValueError:
+        rot_angle = "error"
+        print(card)
+    print(rot_angle)
     return rot_angle
 
 

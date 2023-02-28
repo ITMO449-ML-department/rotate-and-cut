@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from PIL import Image, ImageOps
-import rotate_and_cut.k_means_rotator as k_means_rotator
+import k_means_rotator as k_means_rotator
 import os
 import scipy
 from scipy.signal import find_peaks
@@ -267,6 +267,10 @@ def get_bb(name, image_array = None, save_path=None, intensity = "keypoints", sm
     save_path = _prepare_save_location(save_path, name, verbose)
 
     angle, lines_mask = k_means_rotator.get_rotation_angle(name, image_array, verbose, save_path)
+
+    if angle == "error":
+        print("Not sure about angle")
+        return
 
     if verbose == 2:
         print("Preparing arrays")
