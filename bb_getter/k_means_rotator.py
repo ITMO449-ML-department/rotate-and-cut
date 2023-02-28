@@ -102,7 +102,7 @@ def _get_rotation_angle_with_dbscan(angles):
     return rot_angle
 
 
-def get_rotation_angle(name, verbose, save_path = None):
+def get_rotation_angle(name, image_array, verbose, save_path = None):
     """
     
     name : str

@@ -245,7 +245,7 @@ def _analyse_peaks(mn,inds,save_path =None):
     
 
 
-def get_bb(name, save_path=None, intensity = "keypoints", smooth = False, verbose = 0):
+def get_bb(name, image_array = None, save_path=None, intensity = "keypoints", smooth = False, verbose = 0):
     """
     
     name : str
@@ -266,11 +266,12 @@ def get_bb(name, save_path=None, intensity = "keypoints", smooth = False, verbos
     
     save_path = _prepare_save_location(save_path, name, verbose)
 
-    angle, lines_mask = k_means_rotator.get_rotation_angle(name, verbose,save_path)
+    angle, lines_mask = k_means_rotator.get_rotation_angle(name, image_array, verbose, save_path)
 
     if verbose == 2:
         print("Preparing arrays")
-    image_original = Image.open(name)
+    
+    image_original = Image.fromarray(image_array) if image_array is not None else Image.open(name)
     image_original_array = np.array(image_original)
     image_original_rotated = image_original.rotate(angle, expand=True)
     image_original_rotated_array = np.array(image_original_rotated)
