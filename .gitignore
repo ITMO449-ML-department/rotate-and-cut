@@ -2,3 +2,5 @@ debug
 .ipynb_checkpoints
 .DS_Store
 bb_getter/__pycache__
+winenv/*
+winenv
