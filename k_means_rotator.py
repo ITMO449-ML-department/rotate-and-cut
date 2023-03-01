@@ -37,7 +37,7 @@ def _k_means_choose_channel_contours(new_X, image, verbose,save_path):
 def _k_means_choose_channel(new_X, image, verbose,save_path):
     if save_path is not None:
         fig, ax = plt.subplots(1,3)
-        print(new_X.shape, image.shape)
+        print("   ", new_X.shape, image.shape)
         first_channel = (new_X*(new_X == 1)).reshape((*image.shape[:-1], 1))
         second_channel = (new_X*(new_X == 2)).reshape((*image.shape[:-1], 1))
         third_channel = (new_X*(new_X == 3)).reshape((*image.shape[:-1], 1))
