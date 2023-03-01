@@ -4,3 +4,4 @@ debug
 bb_getter/__pycache__
 winenv/*
 winenv
+__pycache__
