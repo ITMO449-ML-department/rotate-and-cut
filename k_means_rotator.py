@@ -104,7 +104,7 @@ def _get_rotation_angle_with_dbscan(angles):
     except ValueError:
         rot_angle = "error"
         print(card)
-    print(rot_angle)
+    print('   ', rot_angle)
     return rot_angle
 
 
@@ -121,12 +121,12 @@ def get_rotation_angle(name, image_array, verbose, save_path = None):
 
     """
     if verbose >= 2:
-        print(f"   ===== Rotating {name} ========")
+        print(f"   ### Rotating {name}")
 
     if verbose == 2:
         print(f"   Openning image {name}")
     image = image_array if image_array is not None else cv2.imread(name)
-    print(image.shape)
+    print('   ', image.shape)
     if verbose == 2:
         print("   Getting mask of rows using k-means algo")
     lines_mask = _get_kmeans_mask(image, verbose=verbose,save_path=save_path)
