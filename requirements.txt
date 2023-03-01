@@ -1,5 +1,5 @@
 numpy
 pillow
-opencv-python
 matplotlib
 scikit-learn
+opencv-contrib-python
