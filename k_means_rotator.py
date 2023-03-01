@@ -29,7 +29,7 @@ def _k_means_choose_channel_contours(new_X, image, verbose,save_path):
             thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contours_counter.append(len(contours))
         if verbose == 2:
-            print(f"Amount {len(contours_counter)} -> {contours_counter[-1]}")
+            print(f"   Amount {len(contours_counter)} -> {contours_counter[-1]}")
 
     goal_index = np.argmax(np.array(contours_counter)) + 1
     return goal_index
@@ -120,18 +120,19 @@ def get_rotation_angle(name, image_array, verbose, save_path = None):
         angle to rotate, mask made by k-means algo
 
     """
-
+    if verbose >= 2:
+        print(f"   ===== Rotating {name} ========")
 
     if verbose == 2:
-        print(f"Openning image {name}")
+        print(f"   Openning image {name}")
     image = image_array if image_array is not None else cv2.imread(name)
     print(image.shape)
     if verbose == 2:
-        print("Getting mask of rows using k-means algo")
+        print("   Getting mask of rows using k-means algo")
     lines_mask = _get_kmeans_mask(image, verbose=verbose,save_path=save_path)
 
     if verbose == 2:
-        print("Calculating hough lines and angles")
+        print("   Calculating hough lines and angles")
     hough_angles = _get_hough_angles(lines_mask, image, save_path)
 
     return _get_rotation_angle_with_dbscan(hough_angles), lines_mask

@@ -55,7 +55,7 @@ def smooth(y, x):
 
 def _calculate_intensities_by_k_mean_mask(rows_image_rotated_array, image_original_rotated_array, verbose):
     if verbose == 2:
-        print("Calculating intensities")
+        print("   Calculating intensities")
     parts = rows_image_rotated_array.shape[0] // 6
     # parts = max(800, rows_image_rotated_array.shape[0] // 6)
     # print(parts)
@@ -77,13 +77,13 @@ def _calculate_intensities_by_key_points(image_original_rotated_array, verbose):
     # find the keypoints with STAR
     kp = star.detect(img,None)
     if verbose > 1:
-        print(f"Found {len(kp)} keypoints")
+        print(f"   Found {len(kp)} keypoints")
 
     rows_image_rotated_array = image_original_rotated_array.copy() * 0
     rows_image_rotated_array=cv2.drawKeypoints(rows_image_rotated_array,kp,None)
 
     if verbose == 2:
-        print("Calculating intensities")
+        print("   Calculating intensities")
     parts = image_original_rotated_array.shape[0] // 6
     # parts = max(800, rows_image_rotated_array.shape[0] // 6)
     # print(parts)
@@ -105,7 +105,7 @@ def _calculate_limit(mn, mn_smoothed, save_path, verbose):
     limit_smoothed = max(sorted(mn_smoothed)[:int(len(mn_smoothed)*0.97)]) * 0.45
     if save_path is not None:
         if verbose == 2:
-            print("Plotting gists")
+            print("   Plotting gists")
         plt.plot(mn, label='plot not')
         plt.plot([i for i in range(0, len(mn))], [limit] * len(mn), label='not')
         plt.plot([i for i in range(0, len(mn))], [limit_smoothed] * len(mn), label='smoothed')
@@ -119,17 +119,17 @@ def _calculate_limit(mn, mn_smoothed, save_path, verbose):
 def _prepare_save_location(save_path, name, verbose):
     if save_path is not None:
         if verbose == 2:
-            print("Preparing save path")
+            print("   Preparing save path")
         save_path = f"{save_path}/{name.split('/')[-1].split('.')[0]}/"
         if verbose > 0:
-            print("Saving to", save_path)
+            print(f"   Saving to '{save_path}'")
         os.makedirs(save_path, exist_ok=True)
     return save_path
 
 
 def _find_borders(parts, mn, inds, limit, verbose):
     if verbose == 2:
-        print("Searching for rows")
+        print("   Searching for rows")
     borders = []
     low = 0
     high = 0
@@ -147,14 +147,14 @@ def _find_borders(parts, mn, inds, limit, verbose):
                 borders.append((low, high))
             previous_is_row = False
     if verbose > 0:
-        print(f"Found {len(borders)} rows")
+        print(f"   Found {len(borders)} rows")
     return borders
 
 
 def _plot_orig_cut_kmeans(image_original_rotated_array, parts, mn, limit, inds, rows_image_rotated_array, save_path, verbose):
     if save_path is not None:
         if verbose == 2:
-            print("Plotting comparison")
+            print("   Plotting comparison")
         image_array_for_drawing = image_original_rotated_array.copy()
         for i in range(1, parts+1):
             if mn[i-1] < limit:
@@ -171,7 +171,7 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
     bboxes = []
     bboxes_debug = []
     if verbose == 2:
-        print("Calculating bboxes")
+        print("   Calculating bboxes")
     for low, high in borders:
         strip = image_original_rotated_array[low:high, :, :]
         counter_left = 0
@@ -198,7 +198,7 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
         bboxes.append(((low, counter_left), (low, counter_right), (high, counter_right), (high, counter_left)))
 
     if verbose > 0:    
-        print(f"Found {len(bboxes)} bboxes")
+        print(f"Found {len(bboxes)} bboxes!")
         
     if save_path is not None:
         image_array_for_drawing = image_original_rotated_array.copy() * 0 + 255
@@ -209,7 +209,7 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
         # # plt.imshow(image_array_for_drawing)
         # plt.imsave(save_path + "rows_debug.jpg", image_array_for_drawing)
         if verbose == 2:
-            print("Plotting rows check")
+            print("   Plotting rows check")
         colors = [(0,255,0), (255, 0, 0), (0,0,255)]
         i=0
         for box in bboxes:
@@ -263,6 +263,9 @@ def get_bb(name, image_array = None, save_path=None, intensity = "keypoints", sm
         array of bounding boxes, angle of rotation
 
     """
+
+    if verbose > 0:
+        print(f"======== IMAGE {name} ========")
 
     if image_array is not None:
         image_array = image_array[:,:, :3]
