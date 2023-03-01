@@ -196,9 +196,6 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
                     break
         bboxes_debug.append(((low, high, counter_left, counter_right)))
         bboxes.append(((low, counter_left), (low, counter_right), (high, counter_right), (high, counter_left)))
-
-    if verbose > 0:    
-        print(f"Found {len(bboxes)} bboxes!")
         
     if save_path is not None:
         image_array_for_drawing = image_original_rotated_array.copy() * 0 + 255
@@ -219,6 +216,9 @@ def _find_bboxes(borders, image_original_rotated_array, save_path, verbose):
             i = (i+1)%3
             image_original_rotated_array  = cv2.addWeighted(image_original_rotated_array,1,new_rect_rotated,1,0)
         plt.imsave(save_path + "rows_check.jpg", image_original_rotated_array)
+
+    if verbose > 0:    
+        print(f"Found {len(bboxes)} bboxes!\n")
     return bboxes
 
 
@@ -279,7 +279,7 @@ def get_bb(name, image_array = None, save_path=None, intensity = "keypoints", sm
         return
 
     if verbose == 2:
-        print("Preparing arrays")
+        print("   Preparing arrays")
     
     image_original = Image.fromarray(image_array) if image_array is not None else Image.open(name)
     image_original_array = np.array(image_original)
