@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from PIL import Image, ImageOps
-import k_means_rotator as k_means_rotator
+import rotate_and_cut.k_means_rotator as k_means_rotator
 import os
 import scipy
 from scipy.signal import find_peaks
