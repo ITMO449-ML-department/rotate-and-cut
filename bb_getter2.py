@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 from PIL import Image, ImageOps
-import rotate_and_cut.k_means_rotator as k_means_rotator
+import k_means_rotator as k_means_rotator
 import os
 import scipy
 from scipy.signal import find_peaks
@@ -65,6 +65,21 @@ def _calculate_intensities_by_k_mean_mask(rows_image_rotated_array, image_origin
     for i in range(1, parts+1):
         if np.count_nonzero(image_original_rotated_array[inds[i-1]:inds[i], :, 1]) > 0:
             mn.append(np.count_nonzero(rows_image_rotated_array[inds[i-1]:inds[i], :, 1])/np.count_nonzero(image_original_rotated_array[inds[i-1]:inds[i], :, 1]))
+        else:
+            mn.append(0)
+    mn_smoothed = smooth(mn,[i for i in range(len(mn))])
+    return mn, mn_smoothed, parts, inds
+
+def _calculate_intensities_by_k_mean_mask_naive(rows_image_rotated_array, image_original_rotated_array, verbose):
+    if verbose == 2:
+        print("   Calculating intensities")
+    parts = rows_image_rotated_array.shape[0] 
+    width = rows_image_rotated_array.shape[1] 
+    mn = []
+    inds = np.linspace(0, rows_image_rotated_array.shape[0]-1, parts+1).astype(int)
+    for i in range(1, parts+1):
+        if np.count_nonzero(rows_image_rotated_array[inds[i-1]:inds[i], :, 1]) > width*0.05:
+            mn.append(1)
         else:
             mn.append(0)
     mn_smoothed = smooth(mn,[i for i in range(len(mn))])
@@ -302,6 +317,7 @@ def get_bb(name, image_array = None, save_path=None, intensity = "keypoints", sm
     if intensity == "keypoints":
         mn, mn_smoothed, parts, inds = _calculate_intensities_by_key_points(image_original_rotated_array, verbose)
     elif intensity == "kmeansmask":
+        # mn, mn_smoothed, parts, inds = _calculate_intensities_by_k_mean_mask_naive(rows_image_rotated_array, image_original_rotated_array, verbose)
         mn, mn_smoothed, parts, inds = _calculate_intensities_by_k_mean_mask(rows_image_rotated_array, image_original_rotated_array, verbose)
 
     limit, limit_smoothed = _calculate_limit(mn, mn_smoothed, save_path, verbose)
